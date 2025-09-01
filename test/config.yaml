@@ -58,6 +58,7 @@ license:
 lsd:
     # the port on which the Status Server will be running
     port: <PORT>
+    #context_path: "/api/v1"
     # replace this dsn if you're not using SQLite 
     database: "sqlite3://<LCP_HOME>/db/lsd.sqlite?cache=shared&mode=rwc"
     # authentication file of the Status Server. Here we use the same file for the License Server and Status Server

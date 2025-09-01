@@ -38,7 +38,7 @@ func (s *Server) GoofyMode() bool {
 	return s.goofyMode
 }
 
-func New(bindAddr string, readonly bool, goofyMode bool, lst *licensestatuses.LicenseStatuses, trns *transactions.Transactions, basicAuth *auth.BasicAuth) *Server {
+func New(bindAddr string, contextPath string, readonly bool, goofyMode bool, lst *licensestatuses.LicenseStatuses, trns *transactions.Transactions, basicAuth *auth.BasicAuth) *Server {
 
 	sr := api.CreateServerRouter("")
 
@@ -56,17 +56,24 @@ func New(bindAddr string, readonly bool, goofyMode bool, lst *licensestatuses.Li
 		goofyMode: goofyMode,
 	}
 
+	var router *mux.Router
+	if contextPath != "" {
+		router = sr.R.PathPrefix(contextPath).Subrouter()
+	} else {
+		router = sr.R
+	}
+
 	// Route.PathPrefix: http://www.gorillatoolkit.org/pkg/mux#Route.PathPrefix
 	// Route.Subrouter: http://www.gorillatoolkit.org/pkg/mux#Route.Subrouter
 	// Router.StrictSlash: http://www.gorillatoolkit.org/pkg/mux#Router.StrictSlash
 
 	// Ping endpoint
-	s.handleFunc(sr.R, "/ping", apilsd.Ping).Methods("GET")
+	s.handleFunc(router, "/ping", apilsd.Ping).Methods("GET")
 
 	licenseRoutesPathPrefix := "/licenses"
-	licenseRoutes := sr.R.PathPrefix(licenseRoutesPathPrefix).Subrouter().StrictSlash(false)
+	licenseRoutes := router.PathPrefix(licenseRoutesPathPrefix).Subrouter().StrictSlash(false)
 
-	s.handlePrivateFunc(sr.R, licenseRoutesPathPrefix, apilsd.FilterLicenseStatuses, basicAuth).Methods("GET")
+	s.handlePrivateFunc(router, licenseRoutesPathPrefix, apilsd.FilterLicenseStatuses, basicAuth).Methods("GET")
 
 	s.handleFunc(licenseRoutes, "/{key}/status", apilsd.GetLicenseStatusDocument).Methods("GET")
 	s.handleFunc(licenseRoutes, "/{key}", apilsd.GetFreshLicense).Methods("GET")
@@ -79,7 +86,7 @@ func New(bindAddr string, readonly bool, goofyMode bool, lst *licensestatuses.Li
 		s.handlePrivateFunc(licenseRoutes, "/{key}/status", apilsd.LendingCancellation, basicAuth).Methods("PATCH")
 		s.handlePrivateFunc(licenseRoutes, "/{key}/extend", apilsd.ExtendSubscription, basicAuth).Methods("PUT")
 
-		s.handlePrivateFunc(sr.R, "/licenses", apilsd.CreateLicenseStatusDocument, basicAuth).Methods("PUT")
+		s.handlePrivateFunc(router, "/licenses", apilsd.CreateLicenseStatusDocument, basicAuth).Methods("PUT")
 		s.handlePrivateFunc(licenseRoutes, "/", apilsd.CreateLicenseStatusDocument, basicAuth).Methods("PUT")
 	}
 
