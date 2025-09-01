@@ -105,7 +105,8 @@ func main() {
 	HandleSignals()
 
 	parsedPort := strconv.Itoa(config.Config.LsdServer.Port)
-	s := lsdserver.New(":"+parsedPort, readonly, goofyMode, &hist, &trns, authenticator)
+	contextPath := config.Config.LsdServer.ContextPath
+	s := lsdserver.New(":"+parsedPort, contextPath, readonly, goofyMode, &hist, &trns, authenticator)
 	if readonly {
 		log.Println("License status server running in readonly mode on port " + parsedPort)
 	} else {

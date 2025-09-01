@@ -47,6 +47,7 @@ type ServerInfo struct {
 
 type LsdServerInfo struct {
 	ServerInfo     `yaml:",inline"`
+	ContextPath    string `yaml:"context_path,omitempty"`
 	LicenseLinkUrl string `yaml:"license_link_url,omitempty"`
 	UserDataUrl    string `yaml:"user_data_url,omitempty"`
 }
