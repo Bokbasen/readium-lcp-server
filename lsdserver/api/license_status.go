@@ -38,9 +38,6 @@ type Server interface {
 // CreateLicenseStatusDocument creates a license status and adds it to database
 // It is triggered by a notification from the license server
 func CreateLicenseStatusDocument(w http.ResponseWriter, r *http.Request, s Server) {
-
-	logging.Print("CreateLicenseStatusDocument start")
-
 	var lic license.License
 	err := apilcp.DecodeJSONLicense(r, &lic)
 	if err != nil {
@@ -52,14 +49,11 @@ func CreateLicenseStatusDocument(w http.ResponseWriter, r *http.Request, s Serve
 	logging.Print("Create a Status Doc for License " + lic.ID)
 
 	var ls licensestatuses.LicenseStatus
-	logging.Print("1111")
 	makeLicenseStatus(lic, &ls)
-	logging.Print("2222")
 
 	err = s.LicenseStatuses().Add(ls)
-	logging.Print("3333")
 	if err != nil {
-		logging.Print("Error " + err.Error())
+		logging.Error(err.Error())
 		problem.Error(w, r, problem.Problem{Detail: err.Error()}, http.StatusInternalServerError)
 		return
 	}
@@ -898,87 +892,47 @@ func LendingCancellation(w http.ResponseWriter, r *http.Request, s Server) {
 // makeLicenseStatus sets fields of license status according to the config file
 // and creates needed inner objects of license status
 func makeLicenseStatus(license license.License, ls *licensestatuses.LicenseStatus) {
-	// Detailed logging to help debug issues when computing initial License Status
-	logging.Print("makeLicenseStatus: start for license ID=" + license.ID)
-	if license.Rights == nil {
-		logging.Print("makeLicenseStatus: license.Rights is nil (purchase, not a loan)")
-	} else {
-		if license.Rights.End == nil {
-			logging.Print("makeLicenseStatus: license.Rights.End is nil (purchase, not a loan)")
-		} else {
-			logging.Print("makeLicenseStatus: license.Rights.End=" + license.Rights.End.UTC().Format(time.RFC3339))
-		}
-	}
-	logging.Print("makeLicenseStatus: license.Issued=" + license.Issued.UTC().Format(time.RFC3339))
 	ls.LicenseRef = license.ID
 
 	registerAvailable := config.Config.LicenseStatus.Register
 
 	if license.Rights == nil || license.Rights.End == nil {
-		logging.Print("makeLicenseStatus: treat as purchase (no Rights.End); setting CurrentEndLicense=nil and no PotentialRights")
 		// The publication was purchased (not a loan), so we do not set LSD.PotentialRights.End
 		ls.CurrentEndLicense = nil
 	} else {
 		// license.Rights.End exists => this is a loan
 		endFromLicense := license.Rights.End.Add(0)
-		logging.Print("makeLicenseStatus: loan detected; endFromLicense=" + endFromLicense.UTC().Format(time.RFC3339))
 		ls.CurrentEndLicense = &endFromLicense
 		ls.PotentialRights = new(licensestatuses.PotentialRights)
 
 		rentingDays := config.Config.LicenseStatus.RentingDays
-		logging.Print("makeLicenseStatus: rentingDays from config=" + strconv.Itoa(rentingDays))
 		if rentingDays > 0 {
 			endFromConfig := license.Issued.Add(time.Hour * 24 * time.Duration(rentingDays))
-			logging.Print("makeLicenseStatus: computed endFromConfig=" + endFromConfig.UTC().Format(time.RFC3339))
 
 			if endFromLicense.After(endFromConfig) {
 				ls.PotentialRights.End = &endFromLicense
-				logging.Print("makeLicenseStatus: choosing endFromLicense for PotentialRights.End")
 			} else {
 				ls.PotentialRights.End = &endFromConfig
-				logging.Print("makeLicenseStatus: choosing endFromConfig for PotentialRights.End")
 			}
 		} else {
 			ls.PotentialRights.End = &endFromLicense
-			logging.Print("makeLicenseStatus: rentingDays <= 0; PotentialRights.End=endFromLicense")
 		}
 	}
 
-	logging.Print("makeLicenseStatus: registerAvailable from config=" + strconv.FormatBool(registerAvailable))
 	if registerAvailable {
 		ls.Status = status.STATUS_READY
-		logging.Print("makeLicenseStatus: initial status set to READY")
 	} else {
 		ls.Status = status.STATUS_ACTIVE
-		logging.Print("makeLicenseStatus: initial status set to ACTIVE")
 	}
 
 	ls.Updated = new(licensestatuses.Updated)
 	ls.Updated.License = &license.Issued
-	logging.Print("makeLicenseStatus: Updated.License set to=" + ls.Updated.License.UTC().Format(time.RFC3339))
 
 	currentTime := time.Now().UTC().Truncate(time.Second)
 	ls.Updated.Status = &currentTime
-	logging.Print("makeLicenseStatus: Updated.Status set to=" + ls.Updated.Status.UTC().Format(time.RFC3339))
 
 	count := 0
 	ls.DeviceCount = &count
-	logging.Print("makeLicenseStatus: DeviceCount initialized to 0")
-
-	// Summary of resulting LSD fields
-	var curEnd string
-	if ls.CurrentEndLicense == nil || ls.CurrentEndLicense.IsZero() {
-		curEnd = "<nil>"
-	} else {
-		curEnd = ls.CurrentEndLicense.UTC().Format(time.RFC3339)
-	}
-	var potEnd string
-	if ls.PotentialRights == nil || ls.PotentialRights.End == nil || ls.PotentialRights.End.IsZero() {
-		potEnd = "<nil>"
-	} else {
-		potEnd = ls.PotentialRights.End.UTC().Format(time.RFC3339)
-	}
-	logging.Print("makeLicenseStatus: result status=" + ls.Status + ", CurrentEndLicense=" + curEnd + ", PotentialRights.End=" + potEnd)
 }
 
 // getEvents gets the events from database for the license status

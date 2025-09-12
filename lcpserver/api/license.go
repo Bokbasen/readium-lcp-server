@@ -410,7 +410,7 @@ func GetLicense(w http.ResponseWriter, r *http.Request, s Server) {
 // plus a partial license given as input
 func GenerateLicense(w http.ResponseWriter, r *http.Request, s Server) {
 
-	logging.Print("GenerateLicense - start")
+	logging.Debug("GenerateLicense - start")
 	vars := mux.Vars(r)
 	// get the content id from the request URL
 	contentID := vars["content_id"]
@@ -633,7 +633,7 @@ func UpdateLicense(w http.ResponseWriter, r *http.Request, s Server) {
 	licenseID := vars["license_id"]
 
 	// add a log
-	logging.Print("Update the License " + licenseID)
+	logging.Info("Update the License " + licenseID)
 
 	var licIn license.License
 	err := DecodeJSONLicense(r, &licIn)
@@ -885,7 +885,6 @@ func LicenseCount(w http.ResponseWriter, r *http.Request, s Server) {
 
 // DecodeJSONLicense decodes a license formatted in json and returns a license object
 func DecodeJSONLicense(r *http.Request, lic *license.License) error {
-	log.Print("DecodeJSONLicense")
 	var dec *json.Decoder
 
 	if ctype := r.Header["Content-Type"]; len(ctype) > 0 && ctype[0] == api.ContentType_FORM_URL_ENCODED {

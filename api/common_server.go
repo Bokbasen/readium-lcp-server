@@ -12,6 +12,7 @@ import (
 	auth "github.com/abbot/go-http-auth"
 	"github.com/gorilla/mux"
 	"github.com/jeffbmartinez/delay"
+	"github.com/readium/readium-lcp-server/logging"
 	"github.com/rs/cors"
 	"github.com/urfave/negroni"
 
@@ -38,7 +39,7 @@ type ServerRouter struct {
 
 func CreateServerRouter(tplPath string) ServerRouter {
 
-	log.Println("Software Version " + Software_Version)
+	logging.Info("Software Version " + Software_Version)
 
 	r := mux.NewRouter()
 
@@ -71,7 +72,7 @@ func CreateServerRouter(tplPath string) ServerRouter {
 	//n.Use(negroni.NewLogger())
 
 	// debug: log request details
-	n.Use(negroni.HandlerFunc(ExtraLogger))
+	//n.Use(negroni.HandlerFunc(ExtraLogger))
 
 	if tplPath != "" {
 		//https://github.com/urfave/negroni#static
@@ -142,10 +143,9 @@ func CORSHeaders(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 }
 
 func CheckAuth(authenticator *auth.BasicAuth, w http.ResponseWriter, r *http.Request) bool {
-	log.Print("CheckAuth...")
 	var username string
 	if username = authenticator.CheckAuth(r); username == "" {
-		log.Print("username: " + username)
+		logging.Debug("username: " + username)
 		w.Header().Set("WWW-Authenticate", `Basic realm="`+authenticator.Realm+`"`)
 		problem.Error(w, r, problem.Problem{Detail: "User or password do not match!"}, http.StatusUnauthorized)
 		return false
