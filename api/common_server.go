@@ -71,7 +71,7 @@ func CreateServerRouter(tplPath string) ServerRouter {
 	//n.Use(negroni.NewLogger())
 
 	// debug: log request details
-	//n.Use(negroni.HandlerFunc(ExtraLogger))
+	n.Use(negroni.HandlerFunc(ExtraLogger))
 
 	if tplPath != "" {
 		//https://github.com/urfave/negroni#static
@@ -143,6 +143,7 @@ func CORSHeaders(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
 func CheckAuth(authenticator *auth.BasicAuth, w http.ResponseWriter, r *http.Request) bool {
 	var username string
+	log.Print("username: " + username)
 	if username = authenticator.CheckAuth(r); username == "" {
 		w.Header().Set("WWW-Authenticate", `Basic realm="`+authenticator.Realm+`"`)
 		problem.Error(w, r, problem.Problem{Detail: "User or password do not match!"}, http.StatusUnauthorized)

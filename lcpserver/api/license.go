@@ -410,6 +410,7 @@ func GetLicense(w http.ResponseWriter, r *http.Request, s Server) {
 // plus a partial license given as input
 func GenerateLicense(w http.ResponseWriter, r *http.Request, s Server) {
 
+	logging.Print("GenerateLicense - start")
 	vars := mux.Vars(r)
 	// get the content id from the request URL
 	contentID := vars["content_id"]
