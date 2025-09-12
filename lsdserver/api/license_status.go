@@ -38,6 +38,9 @@ type Server interface {
 // CreateLicenseStatusDocument creates a license status and adds it to database
 // It is triggered by a notification from the license server
 func CreateLicenseStatusDocument(w http.ResponseWriter, r *http.Request, s Server) {
+
+	logging.Print("CreateLicenseStatusDocument start")
+
 	var lic license.License
 	err := apilcp.DecodeJSONLicense(r, &lic)
 	if err != nil {

@@ -142,9 +142,10 @@ func CORSHeaders(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 }
 
 func CheckAuth(authenticator *auth.BasicAuth, w http.ResponseWriter, r *http.Request) bool {
+	log.Print("CheckAuth...")
 	var username string
-	log.Print("username: " + username)
 	if username = authenticator.CheckAuth(r); username == "" {
+		log.Print("username: " + username)
 		w.Header().Set("WWW-Authenticate", `Basic realm="`+authenticator.Realm+`"`)
 		problem.Error(w, r, problem.Problem{Detail: "User or password do not match!"}, http.StatusUnauthorized)
 		return false

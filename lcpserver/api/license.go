@@ -885,7 +885,7 @@ func LicenseCount(w http.ResponseWriter, r *http.Request, s Server) {
 
 // DecodeJSONLicense decodes a license formatted in json and returns a license object
 func DecodeJSONLicense(r *http.Request, lic *license.License) error {
-
+	log.Print("DecodeJSONLicense")
 	var dec *json.Decoder
 
 	if ctype := r.Header["Content-Type"]; len(ctype) > 0 && ctype[0] == api.ContentType_FORM_URL_ENCODED {

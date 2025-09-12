@@ -115,7 +115,7 @@ func StoreContent(w http.ResponseWriter, r *http.Request, s Server) {
 // The content_id is taken from  the url.
 // The input file is then deleted.
 func AddContent(w http.ResponseWriter, r *http.Request, s Server) {
-
+	logging.Print("Add publication start")
 	// parse the json payload
 	vars := mux.Vars(r)
 	decoder := json.NewDecoder(r.Body)
