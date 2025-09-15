@@ -5,8 +5,6 @@
 package api
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
 	auth "github.com/abbot/go-http-auth"
@@ -72,7 +70,7 @@ func CreateServerRouter(tplPath string) ServerRouter {
 	//n.Use(negroni.NewLogger())
 
 	// debug: log request details
-	//n.Use(negroni.HandlerFunc(ExtraLogger))
+	n.Use(negroni.HandlerFunc(ExtraLogger))
 
 	if tplPath != "" {
 		//https://github.com/urfave/negroni#static
@@ -106,13 +104,13 @@ func CreateServerRouter(tplPath string) ServerRouter {
 
 func ExtraLogger(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
-	log.Print(" << -------------------")
+	logging.Debug(" << -------------------")
 
-	fmt.Printf("%s => %s (%s)\n", r.RemoteAddr, r.URL.String(), r.RequestURI)
+	logging.Debugf("%s => %s (%s)\n", r.RemoteAddr, r.URL.String(), r.RequestURI)
 
-	log.Println("method: ", r.Method, " path: ", r.URL.Path, " query: ", r.URL.RawQuery)
+	logging.Debugln("method: ", r.Method, " path: ", r.URL.Path, " query: ", r.URL.RawQuery)
 
-	log.Printf("REQUEST headers: %#v", r.Header)
+	logging.Debugf("REQUEST headers: %#v", r.Header)
 
 	// before
 	next(rw, r)
@@ -120,12 +118,12 @@ func ExtraLogger(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
 
 	contentType := rw.Header().Get("Content-Type")
 	if contentType == problem.ContentType_PROBLEM_JSON {
-		log.Print("^^^^ " + problem.ContentType_PROBLEM_JSON + " ^^^^")
+		logging.Debug("^^^^ " + problem.ContentType_PROBLEM_JSON + " ^^^^")
 	}
 
-	log.Printf("RESPONSE headers: %#v", rw.Header())
+	logging.Debugf("RESPONSE headers: %#v", rw.Header())
 
-	log.Print(" >> -------------------")
+	logging.Debug(" >> -------------------")
 }
 
 func CORSHeaders(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
