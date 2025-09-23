@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -47,7 +46,7 @@ func checkGetLicenseInput(l *license.License) error {
 
 	// the user hint is mandatory
 	if l.Encryption.UserKey.Hint == "" {
-		log.Println("User hint is missing")
+		logging.Println("User hint is missing")
 		return ErrMandatoryInfoMissing
 	}
 	// Value or HexValue are mandatory
@@ -61,7 +60,7 @@ func checkGetLicenseInput(l *license.License) error {
 		}
 		l.Encryption.UserKey.Value = value
 	} else if l.Encryption.UserKey.Value == nil {
-		log.Println("User hashed passphrase is missing")
+		logging.Println("User hashed passphrase is missing")
 		return ErrMandatoryInfoMissing
 	}
 	// check the size of Value (32 bytes), to avoid weird errors in the crypto code
@@ -76,7 +75,7 @@ func checkGetLicenseInput(l *license.License) error {
 func checkGenerateLicenseInput(l *license.License) error {
 
 	if l.User.ID == "" {
-		log.Println("User identification is missing")
+		logging.Println("User identification is missing")
 		return ErrMandatoryInfoMissing
 	}
 	// check user hint, passphrase hash and hash algorithm
@@ -122,7 +121,7 @@ func buildLicense(lic *license.License, s Server, updatefix bool) error {
 	// set the LCP profile
 	err := license.SetLicenseProfile(lic)
 	if err != nil {
-		log.Println("Build License: " + err.Error())
+		logging.Println("Build License: " + err.Error())
 		return err
 	}
 
@@ -132,7 +131,7 @@ func buildLicense(lic *license.License, s Server, updatefix bool) error {
 	// get content info from the db
 	content, err := s.Index().Get(lic.ContentID)
 	if err != nil {
-		log.Println("No content with id", lic.ContentID)
+		logging.Println("No content with id", lic.ContentID)
 		return err
 	}
 
