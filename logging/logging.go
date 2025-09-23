@@ -7,6 +7,7 @@ package logging
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -23,7 +24,6 @@ var (
 
 // Init inits the log file and opens it
 func Init(logging config.Logging) error {
-
 	//logPath string, cm bool
 	if logging.Directory != "" {
 		log.Println("Open log file as " + logging.Directory)
@@ -45,22 +45,42 @@ func Init(logging config.Logging) error {
 	return nil
 }
 
-// Print writes a message to the log file / Slack
-func Print(message string) {
+func Print(message string)                   { Info(message) }
+func Println(v ...interface{})               { Infoln(v...) }
+func Printf(format string, v ...interface{}) { Infof(format, v...) }
+
+func writeLog(level string, message string) {
 	// log on stdout
-	log.Print(message)
+	log.Printf("[%s] %s", level, message)
 
 	// log on a file
 	if LogFile != nil {
 		currentTime := time.Now().UTC().Format(time.RFC3339)
-		LogFile.Println(currentTime + "\t" + message)
+		LogFile.Println(currentTime + "\t[" + level + "]\t" + message)
 	}
 
-	// log on Slack
-	if SlackApi != nil {
-		_, _, err := SlackApi.PostMessage(SlackChannelID, slack.MsgOptionText(message, false))
+	// log on Slack (only for WARN and ERROR to reduce noise)
+	if SlackApi != nil && (level == "WARN" || level == "ERROR") {
+		_, _, err := SlackApi.PostMessage(SlackChannelID, slack.MsgOptionText("["+level+"] "+message, false))
 		if err != nil {
 			log.Printf("Error sending Slack msg, %v", err)
 		}
 	}
 }
+
+func Debug(message string) { writeLog("DEBUG", message) }
+func Info(message string)  { writeLog("INFO", message) }
+func Warn(message string)  { writeLog("WARN", message) }
+func Error(message string) { writeLog("ERROR", message) }
+
+// Formatted
+func Debugf(format string, v ...interface{}) { writeLog("DEBUG", fmt.Sprintf(format, v...)) }
+func Infof(format string, v ...interface{})  { writeLog("INFO", fmt.Sprintf(format, v...)) }
+func Warnf(format string, v ...interface{})  { writeLog("WARN", fmt.Sprintf(format, v...)) }
+func Errorf(format string, v ...interface{}) { writeLog("ERROR", fmt.Sprintf(format, v...)) }
+
+// Println
+func Debugln(v ...interface{}) { writeLog("DEBUG", fmt.Sprintln(v...)) }
+func Infoln(v ...interface{})  { writeLog("INFO", fmt.Sprintln(v...)) }
+func Warnln(v ...interface{})  { writeLog("WARN", fmt.Sprintln(v...)) }
+func Errorln(v ...interface{}) { writeLog("ERROR", fmt.Sprintln(v...)) }

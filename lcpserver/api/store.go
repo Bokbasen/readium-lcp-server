@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -182,7 +181,7 @@ func AddContent(w http.ResponseWriter, r *http.Request, s Server) {
 		code = http.StatusOK
 
 		if err == nil {
-			log.Println("Update all license timestamps associated with this publication")
+			logging.Println("Update all license timestamps associated with this publication")
 			err = s.Licenses().TouchByContentID(contentID) // update all licenses update timestamps
 		}
 

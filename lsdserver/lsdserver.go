@@ -8,7 +8,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -40,7 +39,7 @@ func main() {
 	}
 
 	config.ReadConfig(config_file)
-	log.Println("Config from " + config_file)
+	logging.Print("Config from " + config_file)
 
 	readonly = config.Config.LsdServer.ReadOnly
 
@@ -50,7 +49,7 @@ func main() {
 	}
 
 	driver, cnxn := config.GetDatabase(config.Config.LsdServer.Database)
-	log.Println("Database driver " + driver)
+	logging.Print("Database driver " + driver)
 
 	db, err := sql.Open(driver, cnxn)
 	if err != nil {
@@ -108,14 +107,14 @@ func main() {
 	contextPath := config.Config.LsdServer.ContextPath
 	s := lsdserver.New(":"+parsedPort, contextPath, readonly, goofyMode, &hist, &trns, authenticator)
 	if readonly {
-		log.Println("License status server running in readonly mode on port " + parsedPort)
+		logging.Print("License status server running in readonly mode on port " + parsedPort)
 	} else {
-		log.Println("License status server running on port " + parsedPort)
+		logging.Print("License status server running on port " + parsedPort)
 	}
-	log.Println("Public base URL=" + config.Config.LsdServer.PublicBaseUrl)
+	logging.Print("Public base URL=" + config.Config.LsdServer.PublicBaseUrl)
 
 	if err := s.ListenAndServe(); err != nil {
-		log.Println("Error " + err.Error())
+		logging.Error("Error " + err.Error())
 	}
 
 }

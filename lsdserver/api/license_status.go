@@ -53,6 +53,7 @@ func CreateLicenseStatusDocument(w http.ResponseWriter, r *http.Request, s Serve
 
 	err = s.LicenseStatuses().Add(ls)
 	if err != nil {
+		logging.Error(err.Error())
 		problem.Error(w, r, problem.Problem{Detail: err.Error()}, http.StatusInternalServerError)
 		return
 	}
