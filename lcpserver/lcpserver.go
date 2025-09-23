@@ -8,7 +8,6 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -40,7 +39,7 @@ func main() {
 		config_file = "config.yaml"
 	}
 	config.ReadConfig(config_file)
-	log.Println("Config from " + config_file)
+	logging.Println("Config from " + config_file)
 
 	// read only flag
 	readonly = config.Config.LcpServer.ReadOnly
@@ -53,64 +52,64 @@ func main() {
 
 	err = config.SetPublicUrls()
 	if err != nil {
-		log.Println("Error setting public urls: " + err.Error())
+		logging.Print("Error setting public urls: " + err.Error())
 		os.Exit(1)
 	}
 	if certFile = config.Config.Certificate.Cert; certFile == "" {
-		log.Println("Missing certificate in the configuration")
+		logging.Print("Missing certificate in the configuration")
 		os.Exit(1)
 	}
 	if privKeyFile = config.Config.Certificate.PrivateKey; privKeyFile == "" {
-		log.Println("Missing private key in the configuration")
+		logging.Print("Missing private key in the configuration")
 		os.Exit(1)
 	}
 	cert, err := tls.LoadX509KeyPair(certFile, privKeyFile)
 	if err != nil {
-		log.Println("Error loading X509 cert: " + err.Error())
+		logging.Print("Error loading X509 cert: " + err.Error())
 		os.Exit(1)
 	}
 	if config.Config.Profile != "basic" && !license.LCP_PRODUCTION_LIB {
-		log.Println("Can't run in production mode, server built with a test LCP lib")
+		logging.Print("Can't run in production mode, server built with a test LCP lib")
 		os.Exit(1)
 	}
 	if config.Config.Profile == "basic" {
-		log.Println("Server running in test mode")
+		logging.Print("Server running in test mode")
 	} else {
-		log.Println("Server running in production mode, profile " + config.Config.Profile)
+		logging.Print("Server running in production mode, profile " + config.Config.Profile)
 	}
 
 	driver, cnxn := config.GetDatabase(config.Config.LcpServer.Database)
-	log.Println("Database driver " + driver)
+	logging.Print("Database driver " + driver)
 
 	db, err := sql.Open(driver, cnxn)
 	if err != nil {
-		log.Println("Error opening the sql db: " + err.Error())
+		logging.Print("Error opening the sql db: " + err.Error())
 		os.Exit(1)
 	}
 
 	if driver == "sqlite3" && !strings.Contains(cnxn, "_journal") {
 		_, err = db.Exec("PRAGMA journal_mode = WAL")
 		if err != nil {
-			log.Println("Error journaling sqlite3: " + err.Error())
+			logging.Print("Error journaling sqlite3: " + err.Error())
 			os.Exit(1)
 		}
 	}
 
 	idx, err := index.Open(db)
 	if err != nil {
-		log.Println("Error opening the index db: " + err.Error())
+		logging.Print("Error opening the index db: " + err.Error())
 		os.Exit(1)
 	}
 
 	lst, err := license.Open(db)
 	if err != nil {
-		log.Println("Error opening the license db: " + err.Error())
+		logging.Print("Error opening the license db: " + err.Error())
 		os.Exit(1)
 	}
 
 	err = license.CreateDefaultLinks()
 	if err != nil {
-		log.Println("Error setting default links: " + err.Error())
+		logging.Print("Error setting default links: " + err.Error())
 		os.Exit(1)
 	}
 
@@ -122,23 +121,23 @@ func main() {
 		storagePath = config.Config.Storage.FileSystem.Directory
 		os.MkdirAll(storagePath, os.ModePerm) //ignore the error, the folder can already exist
 		store = storage.NewFileSystem(storagePath, config.Config.Storage.FileSystem.URL)
-		log.Println("Storage in", storagePath, " at URL", config.Config.Storage.FileSystem.URL)
+		logging.Println("Storage in", storagePath, " at URL", config.Config.Storage.FileSystem.URL)
 	} else {
 		store = storage.NoStorage()
-		log.Println("No storage created")
+		logging.Print("No storage created")
 	}
 
 	packager := pack.NewPackager(store, idx, 4)
 
 	authFile := config.Config.LcpServer.AuthFile
 	if authFile == "" {
-		log.Println("Missing passwords file")
+		logging.Print("Missing passwords file")
 		os.Exit(1)
 
 	}
 	_, err = os.Stat(authFile)
 	if err != nil {
-		log.Println("Error reaching passwords file: " + err.Error())
+		logging.Print("Error reaching passwords file: " + err.Error())
 		os.Exit(1)
 	}
 	htpasswd := auth.HtpasswdFileProvider(authFile)
@@ -149,14 +148,14 @@ func main() {
 	parsedPort := strconv.Itoa(config.Config.LcpServer.Port)
 	s := lcpserver.New(":"+parsedPort, readonly, &idx, &store, &lst, &cert, packager, authenticator)
 	if readonly {
-		log.Println("License server running in readonly mode on port " + parsedPort)
+		logging.Print("License server running in readonly mode on port " + parsedPort)
 	} else {
-		log.Println("License server running on port " + parsedPort)
+		logging.Print("License server running on port " + parsedPort)
 	}
-	log.Println("Public base URL=" + config.Config.LcpServer.PublicBaseUrl)
+	logging.Print("Public base URL=" + config.Config.LcpServer.PublicBaseUrl)
 
 	if err := s.ListenAndServe(); err != nil {
-		log.Println("Error " + err.Error())
+		logging.Print("Error " + err.Error())
 	}
 
 }
