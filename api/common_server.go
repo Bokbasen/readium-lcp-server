@@ -70,7 +70,7 @@ func CreateServerRouter(tplPath string) ServerRouter {
 	//n.Use(negroni.NewLogger())
 
 	// debug: log request details
-	n.Use(negroni.HandlerFunc(ExtraLogger))
+	//n.Use(negroni.HandlerFunc(ExtraLogger))
 
 	if tplPath != "" {
 		//https://github.com/urfave/negroni#static
